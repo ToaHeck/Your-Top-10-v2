@@ -15,25 +15,36 @@
 <body class="bg-dark">
     <div class="container mt-5">
         <h1 class="text-center mb-4 text-light">Your Spotify Top 10</h1>
-        <div class="text-center mb-4">
-            <button id="authorize" class="btn btn-success">Connect to Spotify</button>
-        </div>
-        <div class="row mt-4">
-            <div class="col-12">
-                <div id="results" class="list-group">Click the button to connect to Spotify...</div>
-            </div>
+        <div>
+            
+            <div class="list-group">
+                <a href="#" target="_blank" class="list-group-item list-group-item-action">Cras justo odio</a>
+                <a href="#" target="_blank" class="list-group-item list-group-item-action">Dapibus ac facilisis in</a>
+                <a href="#" target="_blank" class="list-group-item list-group-item-action">Morbi leo risus</a>
+                <a href="#" target="_blank" class="list-group-item list-group-item-action">Porta ac consectetur ac</a>
+                <a href="#" target="_blank" class="list-group-item list-group-item-action">Vestibulum at eros</a>
+              </div>    
         </div>
     </div>
 
 
 
-
+<div class="dropdown">
+  <button class="btn btn-secondary dropdown-toggle" type="button" id="dropdownMenuButton" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
+    Dropdown button
+  </button>
+  <div class="dropdown-menu" aria-labelledby="dropdownMenuButton">
+    <a class="dropdown-item" href="#">Action</a>
+    <a class="dropdown-item" href="#">Another action</a>
+    <a class="dropdown-item" href="#">Something else here</a>
+  </div>
+</div>
 
 
     <!-- Analysis Section -->
     <div class="container bg-dark mt-5 pt-1">
         <h1 class="text-white"></h1>
-        <p id="analysisResult" class="lead text-light" style="word-break: break-all;"></p>
+        <p id="status-result" class="lead text-light" style="word-break: break-all;"></p>
     </div>
 
     <script src="main.js"></script>
