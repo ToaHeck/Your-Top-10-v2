@@ -3,6 +3,8 @@
 const clientId = "d6e3508364bc452bb0175ba0dca1039d";
 const clientSecret = "1f51308a7b3c47acaf386cc3f2f8c328";
 const artistId = "6fxyWrfmjcbj5d12gXeiNV";              //example artist ID: Denzel Curry
+const redirectUri = "http://127.0.0.1:5500/";           // Change this
+const scopes = "user-read-private user-read-email";
 
 
 
@@ -29,7 +31,35 @@ async function getAccessToken() {
     console.error("Error getting access token:", error);
     return null;
   }
-}
+}//end getAccessToken()
+
+
+
+//login on body load
+function login(){
+
+    //check if user is already logged in
+    if (localStorage.getItem(spotify_login_initiated, true)){
+        console.log("Login already initiated, skipping...");
+        return; 
+    }
+
+    //update login value
+    localStorage.setItem("spotify_login_initiated", "true");
+
+
+    const authUrl = `https://accounts.spotify.com/authorize?` +
+        `client_id=${clientId}&` +
+        `response_type=code&` +
+        `redirect_uri=${encodeURIComponent(redirectUri)}&` +
+        `scope=${encodeURIComponent(scopes)}`;
+      window.location = authUrl;    // Redirect to Spotify login
+}//end login()
+
+
+
+
+
 
 //make GET request to Spotify API
 async function getArtistData() {
@@ -59,7 +89,9 @@ async function getArtistData() {
   } catch (error) {
     console.error("Error fetching artist data:", error);
   }
-}
+}//end getArtistData()
+
+
 
 // Run the function
 getArtistData();
