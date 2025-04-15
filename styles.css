@@ -1,27 +1,33 @@
-body {
-    background-color: #f8f9fa;
+:root{
+     /*mimic spotify color scheme*/
+    --spotify-dark-gray: #191414;
+    --spotify-light-gray: #535353;
+    --spotify-green: #1db954;
+    --spotify-white: #FFFFFF;
 }
 
-#results {
-    .list-group-item {
-        border-radius: 8px;
-        background-color: #d2d2d2;
-        box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
-        transition: transform 0.3s ease;
+*{
+    font-family: "Helvetica-Neue", Helvetica, sans-serif !important;
+    color: var(--spotify-white) !important;
+}
 
-        h5 {
-            margin: 0;
-            font-weight: bold;
-        }
-        a {
-            color: #007bff;
-        }
-    }
 
-    .list-group-item:hover{
-       background-color:  #b7b5b5;
-       transform: scale(1.01);
-    }
+
+body {
+    background-color: var(--spotify-dark-gray) !important; /*override Bootstrap colors*/
+}
+
+.list-group-item {
+    color: var(--spotify-white) !important;
+    border-radius: 8px;
+    background-color: var(--spotify-light-gray) !important;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1) !important;
+    transition: transform 0.3s ease;
+}
+
+.list-group-item:hover{
+    background-color:  var(--spotify-green) !important;
+    transform: scale(1.01);
 }
 
 #analysisResult{

@@ -6,7 +6,11 @@ const artistId = "6fxyWrfmjcbj5d12gXeiNV";              //example artist ID: Den
 const redirectUri = "http://127.0.0.1:5500/";           // Change this
 const scopes = "user-read-private user-read-email user-top-read";
 
-let termLength = "short_term";
+
+//"short_term" = 4 weeks
+//"medium_term" = 6 months
+//"long_ter" = several years
+let termLength ="long_term";
 
 
 
@@ -32,11 +36,6 @@ async function generateCodeChallenge(verifier) {
         .replace(/\//g, "_")
         .replace(/=/g, "");
 }//end generateCodeChallenge()
-
-
-
-
-
 
 
 
@@ -92,21 +91,26 @@ async function login() {
 
 
 async function updateList(userData){
-    const trackArray = [];
     console.log(userData);
+    console.log(termLength);
+
+    $('.list-group').empty(); //clear existing items
 
     //update html list
     for (i = 0; i < userData.length; i++){
-        console.log(`Track Name: ${userData[i].name}`);
-        //print artists
-        for(j = 0; j < userData[i].artists.length; j++){
-            console.log(`Artist: ${userData[i].artists[j].name}`);
-        }
-        console.log(`Link to track: https://open.spotify.com/track/${userData[i].id}`);
+        //build curr track's artists string
+        const artistNames = userData[i].artists.map(artist => artist.name).join(", ");
+
+        //build new list-item
+        $('.list-group').append(`
+            <a href="https://open.spotify.com/track/${userData[i].id}" 
+            target="_blank" 
+            class="list-group-item list-group-item-action">
+                <p class="mb-1 fw-bold">${userData[i].name}</p>
+                <small class="song-artists">${artistNames} </small>
+            </a>
+        `)
     }
-
-
-    
 };
 
 
@@ -115,7 +119,7 @@ async function updateList(userData){
 async function getTopTracks(accessToken) {
     try {
         //make the request
-        const response = await fetch(`https://api.spotify.com/v1/me/top/tracks?limit=10&time_range=short_term`,{
+        const response = await fetch(`https://api.spotify.com/v1/me/top/tracks?limit=10&time_range=${termLength}`,{
             method: "GET",
             headers: {
                 Authorization: `Bearer ${accessToken}`, //input parameter
