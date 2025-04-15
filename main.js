@@ -1,8 +1,5 @@
-
-const clientId = "d6e3508364bc452bb0175ba0dca1039d";
-const clientSecret = "1f51308a7b3c47acaf386cc3f2f8c328";
-const artistId = "6fxyWrfmjcbj5d12gXeiNV";              //example artist ID: Denzel Curry
-const redirectUri = "http://127.0.0.1:5500/";           // Change this
+const clientId = process.env.SPOTIFY_CLIENT_ID;
+const redirectUri = process.env.SPOTIFY_REDIRECT_URI_NETLIFY;
 const scopes = "user-read-private user-read-email user-top-read";
 
 
@@ -35,34 +32,6 @@ async function generateCodeChallenge(verifier) {
         .replace(/\//g, "_")
         .replace(/=/g, "");
 }//end generateCodeChallenge()
-
-
-
-
-//get access token
-async function getAccessToken() {
-    const authString = btoa(`${clientId}:${clientSecret}`); // Base64 encode clientId:clientSecret
-    try {
-        const response = await fetch("https://accounts.spotify.com/api/token", {
-            method: "POST",
-            headers: {
-                "Content-Type": "application/x-www-form-urlencoded",
-                Authorization: `Basic ${authString}`,
-            },
-        body: "grant_type=client_credentials",
-        });
-
-        if (!response.ok) {
-            throw new Error(`Token request failed! Status: ${response.status}`);
-        }
-
-        const data = await response.json();
-        return data.access_token;
-    } catch (error) {
-        console.error("Error getting access token:", error);
-        return null;
-    }
-}//end getAccessToken()
 
 
 
@@ -190,7 +159,7 @@ async function handleSpotifyFlow() {
 
             //log success
             console.log("Successfully connected to Spotify");
-            console.log("Access Token:", accessToken);
+            //console.log("Access Token:", accessToken);
 
             //fetch top tracks
             const tracks = await getTopTracks(accessToken);
@@ -229,9 +198,10 @@ async function handleSpotifyFlow() {
 
 
 
-
-
-
-//run functions
-getArtistData();
-handleSpotifyFlow();
+// Run
+if (clientId) {
+    handleSpotifyFlow();
+} else {
+    console.error("Client ID not defined");
+    document.getElementById("status-result").textContent = "Error: Configuration missing.";
+}
