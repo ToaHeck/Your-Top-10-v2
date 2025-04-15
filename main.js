@@ -1,5 +1,4 @@
 
-
 const clientId = "d6e3508364bc452bb0175ba0dca1039d";
 const clientSecret = "1f51308a7b3c47acaf386cc3f2f8c328";
 const artistId = "6fxyWrfmjcbj5d12gXeiNV";              //example artist ID: Denzel Curry
@@ -10,7 +9,7 @@ const scopes = "user-read-private user-read-email user-top-read";
 //"short_term" = 4 weeks
 //"medium_term" = 6 months
 //"long_ter" = several years
-let termLength ="long_term";
+let termLength ="short_term";
 
 
 
@@ -91,6 +90,7 @@ async function login() {
 
 
 async function updateList(userData){
+    let dict = {}
     console.log(userData);
     console.log(termLength);
 
@@ -105,12 +105,16 @@ async function updateList(userData){
         $('.list-group').append(`
             <a href="https://open.spotify.com/track/${userData[i].id}" 
             target="_blank" 
-            class="list-group-item list-group-item-action">
+            class="list-group-item list-group-item-action mb-1 border-0">
                 <p class="mb-1 fw-bold">${userData[i].name}</p>
                 <small class="song-artists">${artistNames} </small>
             </a>
         `)
+
+        dict[`${userData[i].name}`] = artistNames;
     }
+
+    console.log(dict);
 };
 
 
@@ -144,37 +148,6 @@ async function getTopTracks(accessToken) {
         return null;
     }
 }//end getTopTracks()
-
-
-
-//make GET request to Spotify API
-async function getArtistData() {
-    //use client/secret ids
-    const accessToken = await getAccessToken();
-    if (!accessToken) {
-        console.error("No access token available");
-        return;
-    }
-
-    try {
-        const response = await fetch(`https://api.spotify.com/v1/artists/${artistId}`, {
-            method: "GET",
-            headers: {
-                Authorization: `Bearer ${accessToken}`,
-            },
-        });
-
-        // Check if call was successful
-        if (!response.ok) {
-            throw new Error(`API request failed! Status: ${response.status}`);
-        }
-
-        const data = await response.json();
-        console.log("Artist Data:", data);
-    } catch (error) {
-        console.error("Error fetching artist data:", error);
-    }
-}//end getArtistData()
 
 
 
@@ -250,9 +223,6 @@ async function handleSpotifyFlow() {
         await login();
     }
 }//end handleSpotifyFlow()
-
-
-
 
 
 

@@ -8,6 +8,7 @@
 
 *{
     font-family: "Helvetica-Neue", Helvetica, sans-serif !important;
+    font-weight: 900;
     color: var(--spotify-white) !important;
 }
 
@@ -21,7 +22,7 @@ body {
     color: var(--spotify-white) !important;
     border-radius: 8px;
     background-color: var(--spotify-light-gray) !important;
-    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1) !important;
+   
     transition: transform 0.3s ease;
 }
 
