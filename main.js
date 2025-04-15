@@ -70,14 +70,6 @@ async function getAccessToken() {
 
 //login with PKCE
 async function login() {
-    // Prevent repeated logins
-    if (localStorage.getItem("spotify_login_initiated") === "true") {
-        console.log("Login already initiated, skipping...");
-        return;
-    }
-
-    localStorage.setItem("spotify_login_initiated", "true");
-
     //generate and store code verifier
     const codeVerifier = generateCodeVerifier();
     localStorage.setItem("code_verifier", codeVerifier);
@@ -95,6 +87,27 @@ async function login() {
 
     window.location = authUrl; // Redirect to Spotify login
 }//end login()
+
+
+
+
+async function updateList(userData){
+    const trackArray = [];
+    console.log(userData);
+
+    //update html list
+    for (i = 0; i < userData.length; i++){
+        console.log(`Track Name: ${userData[i].name}`);
+        //print artists
+        for(j = 0; j < userData[i].artists.length; j++){
+            console.log(`Artist: ${userData[i].artists[j].name}`);
+        }
+        console.log(`Link to track: https://open.spotify.com/track/${userData[i].id}`);
+    }
+
+
+    
+};
 
 
 
@@ -118,7 +131,7 @@ async function getTopTracks(accessToken) {
         const data = await response.json();
 
         console.log("User's data:", data.items); // Handle the user data
-
+        updateList(data.items);
         return data.items;
 
     }catch (error){
@@ -132,6 +145,7 @@ async function getTopTracks(accessToken) {
 
 //make GET request to Spotify API
 async function getArtistData() {
+    //use client/secret ids
     const accessToken = await getAccessToken();
     if (!accessToken) {
         console.error("No access token available");
@@ -139,20 +153,20 @@ async function getArtistData() {
     }
 
     try {
-        const response = await fetch(`https://api.spotify.com/v1/artists/${artistId}`,{
+        const response = await fetch(`https://api.spotify.com/v1/artists/${artistId}`, {
             method: "GET",
             headers: {
                 Authorization: `Bearer ${accessToken}`,
             },
         });
 
-        //check if call was successful
+        // Check if call was successful
         if (!response.ok) {
             throw new Error(`API request failed! Status: ${response.status}`);
         }
 
         const data = await response.json();
-        console.log("Artist Data:", data); // Handle the artist data
+        console.log("Artist Data:", data);
     } catch (error) {
         console.error("Error fetching artist data:", error);
     }
@@ -160,75 +174,76 @@ async function getArtistData() {
 
 
 
+
 //handle Spotify callback
 async function handleSpotifyFlow() {
     const params = new URLSearchParams(window.location.search);
     const code = params.get("code");
-    //if no code, trigger login and store token
-    if (!code) {
-        if (localStorage.getItem("spotify_access_token")) {
-            const storedToken = localStorage.getItem("spotify_access_token");
-            if (storedToken) {
-                console.log("Using stored access token");
-                document.getElementById("status-result").textContent = "Connected to Spotify.";
-                //try stored token; re-login if invalid
-                const tracks = await getTopTracks(storedToken);
-                if (!tracks) {
-                    console.log("Stored token invalid, clearing and re-login");
-                    localStorage.removeItem("spotify_access_token");
-                    await login();
-                }
+
+    //if code exists, process PKCE token exchange
+    if (code) {
+        try {
+            const codeVerifier = localStorage.getItem("code_verifier");
+            const tokenResponse = await fetch("https://accounts.spotify.com/api/token", {
+                method: "POST",
+                headers: {
+                    "Content-Type": "application/x-www-form-urlencoded",
+                },
+                body:
+                    `grant_type=authorization_code&` +
+                    `code=${code}&` +
+                    `redirect_uri=${encodeURIComponent(redirectUri)}&` +
+                    `client_id=${clientId}&` +
+                    `code_verifier=${codeVerifier}`,
+            });
+
+            if (!tokenResponse.ok) {
+                throw new Error(`Token request failed! Status: ${tokenResponse.status} ${await tokenResponse.text()}`);
             }
-        } else {
+
+            const tokenData = await tokenResponse.json();
+            const accessToken = tokenData.access_token;
+
+            //store token in localStorage
+            localStorage.setItem("spotify_access_token", accessToken);
+            localStorage.removeItem("code_verifier");
+
+            //clear URL parameters
+            window.history.replaceState({}, document.title, window.location.pathname);
+
+            //log success
+            console.log("Successfully connected to Spotify");
+            console.log("Access Token:", accessToken);
+
+            //fetch top tracks
+            const tracks = await getTopTracks(accessToken);
+            if (!tracks) {
+                localStorage.removeItem("spotify_access_token");
+                await login();
+            }
+        } catch (error) {
+            console.error("Error in Spotify flow:", error);
+            document.getElementById("status-result").textContent = "Error connecting to Spotify.";
+            localStorage.removeItem("code_verifier");
             await login();
         }
         return;
     }
 
-    //exchange the generated code for access token
-    try {
-        const codeVerifier = localStorage.getItem("code_verifier");
-        const tokenResponse = await fetch("https://accounts.spotify.com/api/token", {
-            method: "POST",
-            headers: {
-                "Content-Type": "application/x-www-form-urlencoded",
-            },
-            body:
-                `grant_type=authorization_code&` +
-                `code=${code}&` +
-                `redirect_uri=${encodeURIComponent(redirectUri)}&` +
-                `client_id=${clientId}&` +
-                `code_verifier=${codeVerifier}`,
-        });
-
-        if (!tokenResponse.ok) {
-            throw new Error(`Token request failed! Status: ${tokenResponse.status}`);
+    //no code: check stored token
+    const storedToken = localStorage.getItem("spotify_access_token");
+    if (storedToken) {
+        console.log("Using stored access token");
+        const tracks = await getTopTracks(storedToken);
+        if (tracks) {
+            document.getElementById("status-result").textContent = `Fetched top ${tracks.length} tracks!`;
+        } else {
+            console.log("Stored token invalid, clearing and re-login");
+            localStorage.removeItem("spotify_access_token");
+            await login();
         }
-
-        const tokenData = await tokenResponse.json();
-        const accessToken = tokenData.access_token;
-
-        //store token in localStorage
-        localStorage.setItem("spotify_access_token", accessToken);
-        localStorage.removeItem("spotify_login_initiated");
-        localStorage.removeItem("code_verifier");
-
-        //clear URL parameters
-        window.history.replaceState({}, document.title, window.location.pathname);
-
-        //verify through console
-        console.log("Successfully connected to Spotify");
-        //verify access token
-        console.log("Access Token:", accessToken);
-        //get top 10 tracks
-        // Fetch top tracks
-        await getTopTracks(accessToken);
-
-    } catch (error) {
-        console.error("Error in Spotify flow:", error);
-        document.getElementById("status-result").textContent = "Error connecting to Spotify.";
-        localStorage.removeItem("spotify_login_initiated");
-        localStorage.removeItem("code_verifier");
+    } else {
+        await login();
     }
 }//end handleSpotifyFlow()
 
