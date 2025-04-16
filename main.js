@@ -1,5 +1,6 @@
-const clientId = process.env.SPOTIFY_CLIENT_ID;
-const redirectUri = process.env.SPOTIFY_REDIRECT_URI_NETLIFY;
+// Environment variables from window.env (Netlify) or localStorage (local)
+let clientId = window.env.SPOTIFY_CLIENT_ID;
+let redirectUri = window.env.SPOTIFY_REDIRECT_URI_NETLIFY;
 const scopes = "user-read-private user-read-email user-top-read";
 
 
@@ -198,10 +199,10 @@ async function handleSpotifyFlow() {
 
 
 
-// Run
-if (clientId) {
+// Run if config is set
+if ((isLocal && isEnvUnset && localStorage.getItem('spotify_config')) || (!isLocal && clientId && !clientId.includes('${process.env'))) {
     handleSpotifyFlow();
-} else {
+} else if (!isLocal) {
     console.error("Client ID not defined");
     document.getElementById("status-result").textContent = "Error: Configuration missing.";
 }
