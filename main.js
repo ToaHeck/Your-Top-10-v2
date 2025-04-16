@@ -1,208 +1,195 @@
-// Environment variables from window.env (Netlify) or localStorage (local)
-let clientId = window.env.SPOTIFY_CLIENT_ID;
-let redirectUri = window.env.SPOTIFY_REDIRECT_URI_NETLIFY;
-const scopes = "user-read-private user-read-email user-top-read";
+(async function() {
+    // Initialize environment variables
+    let clientId = window.env.SPOTIFY_CLIENT_ID;
+    let redirectUri;
+    const scopes = "user-read-private user-read-email user-top-read";
+    let termLength = "short_term";
+    const isLocal = window.location.hostname === '127.0.0.1' || window.location.hostname === 'localhost';
 
-
-//"short_term" = 4 weeks
-//"medium_term" = 6 months
-//"long_ter" = several years
-let termLength ="short_term";
-
-
-
-//generate PKCE code verifier
-function generateCodeVerifier() {
-    const array = new Uint8Array(32);
-    crypto.getRandomValues(array);
-    return btoa(String.fromCharCode(...array))
-        .replace(/\+/g, "-")
-        .replace(/\//g, "_")
-        .replace(/=/g, "");
-}//end generateCodeVerifier()
-
-
-
-//generate PKCE code challenge
-async function generateCodeChallenge(verifier) {
-    const encoder = new TextEncoder();
-    const data = encoder.encode(verifier);
-    const digest = await crypto.subtle.digest("SHA-256", data);
-    return btoa(String.fromCharCode(...new Uint8Array(digest)))
-        .replace(/\+/g, "-")
-        .replace(/\//g, "_")
-        .replace(/=/g, "");
-}//end generateCodeChallenge()
-
-
-
-//login with PKCE
-async function login() {
-    //generate and store code verifier
-    const codeVerifier = generateCodeVerifier();
-    localStorage.setItem("code_verifier", codeVerifier);
-    const codeChallenge = await generateCodeChallenge(codeVerifier);
-
-    //build authorization URL
-    const authUrl =
-        `https://accounts.spotify.com/authorize?` +
-        `client_id=${clientId}&` +
-        `response_type=code&` +
-        `redirect_uri=${encodeURIComponent(redirectUri)}&` +
-        `scope=${encodeURIComponent(scopes)}&` +
-        `code_challenge=${codeChallenge}&` +
-        `code_challenge_method=S256`;
-
-    window.location = authUrl; // Redirect to Spotify login
-}//end login()
-
-
-
-
-async function updateList(userData){
-    let dict = {}
-    console.log(userData);
-    console.log(termLength);
-
-    $('.list-group').empty(); //clear existing items
-
-    //update html list
-    for (i = 0; i < userData.length; i++){
-        //build curr track's artists string
-        const artistNames = userData[i].artists.map(artist => artist.name).join(", ");
-
-        //build new list-item
-        $('.list-group').append(`
-            <a href="https://open.spotify.com/track/${userData[i].id}" 
-            target="_blank" 
-            class="list-group-item list-group-item-action mb-1 border-0">
-                <p class="mb-1 fw-bold">${userData[i].name}</p>
-                <small class="song-artists">${artistNames} </small>
-            </a>
-        `)
-
-        dict[`${userData[i].name}`] = artistNames;
-    }
-
-    console.log(dict);
-};
-
-
-
-//GET user's top ten tracks using PCKE
-async function getTopTracks(accessToken) {
-    try {
-        //make the request
-        const response = await fetch(`https://api.spotify.com/v1/me/top/tracks?limit=10&time_range=${termLength}`,{
-            method: "GET",
-            headers: {
-                Authorization: `Bearer ${accessToken}`, //input parameter
-            }
-        });
-
-        //check if call was successful
-        if (!response.ok){
-            throw new Error(`API request failed! Status: ${response.status}`);
-        }
-        
-        //parse response and store in "data"
-        const data = await response.json();
-
-        console.log("User's data:", data.items); // Handle the user data
-        updateList(data.items);
-        return data.items;
-
-    }catch (error){
-        console.error("Error fetching user's information:", error);
-        document.getElementById("status-result").textContent = "Failed to fetch top tracks.";
-        return null;
-    }
-}//end getTopTracks()
-
-
-
-
-//handle Spotify callback
-async function handleSpotifyFlow() {
-    const params = new URLSearchParams(window.location.search);
-    const code = params.get("code");
-
-    //if code exists, process PKCE token exchange
-    if (code) {
+    // Load .env locally if placeholders detected
+    if (isLocal && clientId.includes('${process.env')) {
         try {
-            const codeVerifier = localStorage.getItem("code_verifier");
-            const tokenResponse = await fetch("https://accounts.spotify.com/api/token", {
-                method: "POST",
+            const response = await fetch('/.env');
+            if (!response.ok) throw new Error('Failed to load .env');
+            const envText = await response.text();
+            const envVars = {};
+            envText.split('\n').forEach(line => {
+                const [key, value] = line.split('=').map(s => s.trim());
+                if (key && value) envVars[key] = value;
+            });
+            clientId = envVars.SPOTIFY_CLIENT_ID || clientId;
+            window.env.SPOTIFY_CLIENT_ID = clientId;
+            window.env.SPOTIFY_REDIRECT_URI_LOCAL = envVars.SPOTIFY_REDIRECT_URI_LOCAL || window.env.SPOTIFY_REDIRECT_URI_LOCAL;
+            window.env.SPOTIFY_REDIRECT_URI_NETLIFY = envVars.SPOTIFY_REDIRECT_URI_NETLIFY || window.env.SPOTIFY_REDIRECT_URI_NETLIFY;
+        } catch (error) {
+            console.error("Error loading .env:", error);
+            document.getElementById("status-result").textContent = "Error: Please create a .env file with SPOTIFY_CLIENT_ID and SPOTIFY_REDIRECT_URI_LOCAL.";
+            return;
+        }
+    }
+
+    // Set redirectUri based on environment
+    redirectUri = isLocal ? window.env.SPOTIFY_REDIRECT_URI_LOCAL : window.env.SPOTIFY_REDIRECT_URI_NETLIFY;
+
+    // Generate PKCE code verifier
+    function generateCodeVerifier() {
+        const array = new Uint8Array(32);
+        crypto.getRandomValues(array);
+        return btoa(String.fromCharCode(...array))
+            .replace(/\+/g, "-")
+            .replace(/\//g, "_")
+            .replace(/=/g, "");
+    }
+
+    // Generate PKCE code challenge
+    async function generateCodeChallenge(verifier) {
+        const encoder = new TextEncoder();
+        const data = encoder.encode(verifier);
+        const digest = await crypto.subtle.digest("SHA-256", data);
+        return btoa(String.fromCharCode(...new Uint8Array(digest)))
+            .replace(/\+/g, "-")
+            .replace(/\//g, "_")
+            .replace(/=/g, "");
+    }
+
+    // Login with PKCE
+    async function login() {
+        const codeVerifier = generateCodeVerifier();
+        localStorage.setItem("code_verifier", codeVerifier);
+        const codeChallenge = await generateCodeChallenge(codeVerifier);
+
+        const authUrl =
+            `https://accounts.spotify.com/authorize?` +
+            `client_id=${clientId}&` +
+            `response_type=code&` +
+            `redirect_uri=${encodeURIComponent(redirectUri)}&` +
+            `scope=${encodeURIComponent(scopes)}&` +
+            `code_challenge=${codeChallenge}&` +
+            `code_challenge_method=S256`;
+
+        window.location = authUrl;
+    }
+
+    // Create and display track list
+    async function updateList(userData) {
+        let dict = {};
+        console.log(userData);
+        console.log(termLength);
+
+        $('.list-group').empty();
+
+        for (let i = 0; i < userData.length; i++) {
+            const artistNames = userData[i].artists.map(artist => artist.name).join(", ");
+            $('.list-group').append(`
+                <a href="https://open.spotify.com/track/${userData[i].id}" 
+                   target="_blank" 
+                   class="list-group-item list-group-item-action mb-1 border-0">
+                    <p class="mb-1 fw-bold">${userData[i].name}</p>
+                    <small class="song-artists">${artistNames}</small>
+                </a>
+            `);
+            dict[`${userData[i].name}`] = artistNames;
+        }
+
+        console.log(dict);
+    }
+
+    // GET user's top ten tracks
+    async function getTopTracks(accessToken) {
+        try {
+            const response = await fetch(`https://api.spotify.com/v1/me/top/tracks?limit=10&time_range=${termLength}`, {
+                method: "GET",
                 headers: {
-                    "Content-Type": "application/x-www-form-urlencoded",
-                },
-                body:
-                    `grant_type=authorization_code&` +
-                    `code=${code}&` +
-                    `redirect_uri=${encodeURIComponent(redirectUri)}&` +
-                    `client_id=${clientId}&` +
-                    `code_verifier=${codeVerifier}`,
+                    Authorization: `Bearer ${accessToken}`,
+                }
             });
 
-            if (!tokenResponse.ok) {
-                throw new Error(`Token request failed! Status: ${tokenResponse.status} ${await tokenResponse.text()}`);
+            if (!response.ok) {
+                throw new Error(`API request failed! Status: ${response.status}`);
             }
 
-            const tokenData = await tokenResponse.json();
-            const accessToken = tokenData.access_token;
+            const data = await response.json();
+            console.log("User's data:", data.items);
+            document.getElementById("status-result").textContent = `Fetched top ${data.items.length} tracks!`;
+            updateList(data.items);
+            return data.items;
+        } catch (error) {
+            console.error("Error fetching top tracks:", error);
+            document.getElementById("status-result").textContent = "Failed to fetch top tracks.";
+            return null;
+        }
+    }
 
-            //store token in localStorage
-            localStorage.setItem("spotify_access_token", accessToken);
-            localStorage.removeItem("code_verifier");
+    // Handle Spotify callback
+    async function handleSpotifyFlow() {
+        const params = new URLSearchParams(window.location.search);
+        const code = params.get("code");
 
-            //clear URL parameters
-            window.history.replaceState({}, document.title, window.location.pathname);
+        if (code) {
+            try {
+                const codeVerifier = localStorage.getItem("code_verifier");
+                const tokenResponse = await fetch("https://accounts.spotify.com/api/token", {
+                    method: "POST",
+                    headers: {
+                        "Content-Type": "application/x-www-form-urlencoded",
+                    },
+                    body:
+                        `grant_type=authorization_code&` +
+                        `code=${code}&` +
+                        `redirect_uri=${encodeURIComponent(redirectUri)}&` +
+                        `client_id=${clientId}&` +
+                        `code_verifier=${codeVerifier}`,
+                });
 
-            //log success
-            console.log("Successfully connected to Spotify");
-            //console.log("Access Token:", accessToken);
+                if (!tokenResponse.ok) {
+                    throw new Error(`Token request failed! Status: ${tokenResponse.status} ${await tokenResponse.text()}`);
+                }
 
-            //fetch top tracks
-            const tracks = await getTopTracks(accessToken);
-            if (!tracks) {
+                const tokenData = await tokenResponse.json();
+                const accessToken = tokenData.access_token;
+
+                localStorage.setItem("spotify_access_token", accessToken);
+                localStorage.removeItem("code_verifier");
+
+                window.history.replaceState({}, document.title, window.location.pathname);
+
+                console.log("Successfully connected to Spotify");
+
+                const tracks = await getTopTracks(accessToken);
+                if (!tracks) {
+                    localStorage.removeItem("spotify_access_token");
+                    await login();
+                }
+            } catch (error) {
+                console.error("Error in Spotify flow:", error);
+                document.getElementById("status-result").textContent = "Error connecting to Spotify.";
+                localStorage.removeItem("code_verifier");
+                await login();
+            }
+            return;
+        }
+
+        const storedToken = localStorage.getItem("spotify_access_token");
+        if (storedToken) {
+            console.log("Using stored access token");
+            const tracks = await getTopTracks(storedToken);
+            if (tracks) {
+                document.getElementById("status-result").textContent = `Fetched top ${tracks.length} tracks!`;
+            } else {
+                console.log("Stored token invalid, clearing and re-login");
                 localStorage.removeItem("spotify_access_token");
                 await login();
             }
-        } catch (error) {
-            console.error("Error in Spotify flow:", error);
-            document.getElementById("status-result").textContent = "Error connecting to Spotify.";
-            localStorage.removeItem("code_verifier");
-            await login();
-        }
-        return;
-    }
-
-    //no code: check stored token
-    const storedToken = localStorage.getItem("spotify_access_token");
-    if (storedToken) {
-        console.log("Using stored access token");
-        const tracks = await getTopTracks(storedToken);
-        if (tracks) {
-            document.getElementById("status-result").textContent = `Fetched top ${tracks.length} tracks!`;
         } else {
-            console.log("Stored token invalid, clearing and re-login");
-            localStorage.removeItem("spotify_access_token");
             await login();
         }
-    } else {
-        await login();
     }
-}//end handleSpotifyFlow()
 
-
-
-
-
-
-// Run if config is set
-if ((isLocal && isEnvUnset && localStorage.getItem('spotify_config')) || (!isLocal && clientId && !clientId.includes('${process.env'))) {
-    handleSpotifyFlow();
-} else if (!isLocal) {
-    console.error("Client ID not defined");
-    document.getElementById("status-result").textContent = "Error: Configuration missing.";
-}
+    // Run
+    if (clientId && redirectUri && !clientId.includes('${process.env') && !redirectUri.includes('${process.env')) {
+        handleSpotifyFlow();
+    } else {
+        console.error("Client ID or Redirect URI not defined");
+        document.getElementById("status-result").textContent = "Error: Configuration missing.";
+    }
+})();
