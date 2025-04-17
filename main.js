@@ -30,23 +30,29 @@ async function generateCodeChallenge(verifier) {
         .replace(/=/g, "");
 }
 
-// Login with PKCE
+
+//login with PKCE
 async function login() {
     const codeVerifier = generateCodeVerifier();
     localStorage.setItem("code_verifier", codeVerifier);
     const codeChallenge = await generateCodeChallenge(codeVerifier);
 
-    const authUrl =
-        `https://accounts.spotify.com/authorize?` +
-        `client_id=${clientId}&` +
-        `response_type=code&` +
-        `redirect_uri=${encodeURIComponent(redirectUri)}&` +
-        `scope=${encodeURIComponent(scopes)}&` +
-        `code_challenge=${codeChallenge}&` +
-        `code_challenge_method=S256`;
+    // Call Netlify function to get the auth URL
+    const response = await fetch("/.netlify/functions/spotify-auth", {
+        method: "POST",
+        body: JSON.stringify({ code_challenge: codeChallenge })
+    });
 
+    if (!response.ok) {
+        console.error("Failed to get auth URL from serverless function");
+        return;
+    }
+
+    const { authUrl } = await response.json();
     window.location = authUrl;
 }
+
+
 
 // Create and display track list
 async function updateList(userData) {
@@ -71,6 +77,8 @@ async function updateList(userData) {
 
     console.log(dict);
 }
+
+
 
 // GET user's top ten tracks
 async function getTopTracks(accessToken) {
@@ -97,6 +105,8 @@ async function getTopTracks(accessToken) {
         return null;
     }
 }
+
+
 
 // Handle Spotify callback
 async function handleSpotifyFlow() {
