@@ -1,6 +1,11 @@
 const clientId = window.env.SPOTIFY_CLIENT_ID;
-const isLocal = window.location.hostname === '127.0.0.1' || window.location.hostname === 'localhost';
-const redirectUri = isLocal ? window.env.SPOTIFY_REDIRECT_URI_LOCAL : window.env.SPOTIFY_REDIRECT_URI_NETLIFY;
+
+const redirectUri = window.location.hostname === "127.0.0.1"
+  ? window.env.SPOTIFY_REDIRECT_URI_LOCAL
+  : window.env.SPOTIFY_REDIRECT_URI_NETLIFY;
+
+console.log(clientId);       // should print your client ID
+console.log(redirectUri);    // should print your local redirect URI on Live Server
 const scopes = "user-read-private user-read-email user-top-read";
 let termLength = "short_term";
 
