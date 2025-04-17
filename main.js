@@ -38,7 +38,7 @@ async function login() {
     const codeChallenge = await generateCodeChallenge(codeVerifier);
 
     // Call Netlify function to get the auth URL
-    const response = await fetch("/.netlify/functions/spotify-auth", {
+    const response = await fetch("./netlify/functions/spotify-auth", {
         method: "POST",
         body: JSON.stringify({ code_challenge: codeChallenge })
     });
