@@ -1,3 +1,7 @@
+console.log(import.meta.env.VITE_SPOTIFY_CLIENT_ID);
+console.log(import.meta.env.VITE_SPOTIFY_REDIRECT_URI_NETLIFY);
+
+
 const clientId = window.env.SPOTIFY_CLIENT_ID;
 
 const redirectUri = window.location.hostname === "127.0.0.1"
