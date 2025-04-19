@@ -23,9 +23,11 @@
         <p id="status-result" class="lead text-light" style="word-break: break-all;"></p>
     </div>
 
-    <!--load local env (ignored on Netlify) -->
-    <!-- <script src="env.js"></script> -->         <!-- This is commented out becuase it will try to call a non-existent file in the .gitignore -->
 
+    <!--load local env (ignored on Netlify) -->
+    <script src="env.js"></script>        <!-- This is commented out becuase it will try to call a non-existent file in the .gitignore -->
+
+    
     <!--inject environment variables for Netlify -->
     <script>
         window.env = window.env || {
