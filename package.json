@@ -1,0 +1,11 @@
+{
+  "name": "your-top-10-v2",
+  "version": "1.0.0",
+  "description": "Spotify Top 10 Tracker",
+  "scripts": {
+    "dev": "npx http-server -p 8000 -o"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC"
+}
