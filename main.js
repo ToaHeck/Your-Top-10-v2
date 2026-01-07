@@ -39,18 +39,34 @@ async function login() {
     localStorage.setItem("code_verifier", codeVerifier);
     const codeChallenge = await generateCodeChallenge(codeVerifier);
 
-    // Call Netlify function to get the auth URL
-    const response = await fetch("./netlify/functions/spotify-auth", {
-        method: "POST",
-        body: JSON.stringify({ code_challenge: codeChallenge })
-    });
+    // Build auth URL directly for local development or use Netlify function for production
+    let authUrl;
 
-    if (!response.ok) {
-        console.error("Failed to get auth URL from serverless function");
-        return;
+    if (window.location.hostname === "127.0.0.1" || window.location.hostname === "localhost") {
+        // Local development - build URL directly
+        authUrl = `https://accounts.spotify.com/authorize?` +
+            `client_id=${clientId}&` +
+            `response_type=code&` +
+            `redirect_uri=${encodeURIComponent(redirectUri)}&` +
+            `scope=${encodeURIComponent(scopes)}&` +
+            `code_challenge=${codeChallenge}&` +
+            `code_challenge_method=S256`;
+    } else {
+        // Production - use Netlify function
+        const response = await fetch("./netlify/functions/spotify-auth", {
+            method: "POST",
+            body: JSON.stringify({ code_challenge: codeChallenge })
+        });
+
+        if (!response.ok) {
+            console.error("Failed to get auth URL from serverless function");
+            return;
+        }
+
+        const data = await response.json();
+        authUrl = data.authUrl;
     }
 
-    const { authUrl } = await response.json();
     window.location = authUrl;
 }
 
