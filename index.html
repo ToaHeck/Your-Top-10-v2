@@ -28,12 +28,12 @@
     <script src="env.js"></script>
 
     
-    <!--inject environment variables for Netlify -->
+    <!--fallback for Netlify if env.js doesn't load -->
     <script>
         window.env = window.env || {
-            SPOTIFY_CLIENT_ID: "${process.env.SPOTIFY_CLIENT_ID}",
-            SPOTIFY_REDIRECT_URI_LOCAL: "${process.env.SPOTIFY_REDIRECT_URI_LOCAL}",
-            SPOTIFY_REDIRECT_URI_NETLIFY: "${process.env.SPOTIFY_REDIRECT_URI_NETLIFY}"
+            SPOTIFY_CLIENT_ID: "52eda75213d5481caadf899492aaa187",
+            SPOTIFY_REDIRECT_URI_LOCAL: "http://127.0.0.1:8000/index.html",
+            SPOTIFY_REDIRECT_URI_NETLIFY: "https://stellular-maamoul-f64cd9.netlify.app/"
         };
     </script>
 
