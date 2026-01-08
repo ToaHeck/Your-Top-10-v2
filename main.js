@@ -172,7 +172,10 @@ async function handleSpotifyFlow() {
     }
 }
 
-
+// Run
+console.log(`DEBUG: printing values before conditional`);
+console.log(`DEBUG: clientID: ${clientId}`);
+console.log(`DEBUG: redirect URI: ${redirectUri}`);
 
 
 if (clientId && redirectUri && !clientId.includes('${process.env') && !redirectUri.includes('${process.env')) {

@@ -6,6 +6,12 @@ A web application that displays your top 10 most-listened-to tracks from Spotify
 
 🔗 [https://stellular-maamoul-f64cd9.netlify.app/](https://stellular-maamoul-f64cd9.netlify.app/)
 
+## Demo
+
+![App Demo](assets/demo.gif)
+
+*See the app in action - authenticate with Spotify and view your top 10 tracks instantly!*
+
 ## Features
 
 - View your top 10 Spotify tracks

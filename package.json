@@ -3,9 +3,12 @@
   "version": "1.0.0",
   "description": "Spotify Top 10 Tracker",
   "scripts": {
-    "dev": "npx http-server -p 8000 & sleep 1 && open http://127.0.0.1:8000 && fg"
+    "dev": "http-server -p 8000 -a 127.0.0.1 -o"
   },
   "keywords": [],
   "author": "",
-  "license": "ISC"
+  "license": "ISC",
+  "devDependencies": {
+    "http-server": "^14.1.1"
+  }
 }
