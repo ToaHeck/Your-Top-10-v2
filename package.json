@@ -3,7 +3,7 @@
   "version": "1.0.0",
   "description": "Spotify Top 10 Tracker",
   "scripts": {
-    "dev": "http-server -p 8000 -a 127.0.0.1 -o"
+    "dev": "npx http-server -p 8000 -a 127.0.0.1 -o"
   },
   "keywords": [],
   "author": "",
