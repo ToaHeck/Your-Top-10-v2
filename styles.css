@@ -36,17 +36,27 @@ body {
 }
 
 .dropdown-menu {
-    background-color: var(--spotify-light-gray) !important;
-    border: 1px solid var(--spotify-green);
+    background-color: var(--spotify-dark-gray) !important;
+    border: 1px solid var(--spotify-green) !important;
 }
 
 .dropdown-item {
-    color: var(--spotify-white) !important;
-    transition: background-color 0.2s ease;
+    color: white !important;
+    background-color: var(--spotify-dark-gray) !important;
+    transition: background-color 0.2s ease, color 0.2s ease;
 }
 
 .dropdown-item:hover {
     background-color: var(--spotify-green) !important;
-    color: var(--spotify-white) !important;
+}
+
+.dropdown-item:focus,
+.dropdown-item:active {
+    color: white !important;
+}
+
+/* Override universal white color for dropdown hover - must be AFTER other rules */
+.dropdown-menu a.dropdown-item:hover {
+    color: #000000 !important;
 }
 

@@ -6,10 +6,23 @@ const redirectUri = window.location.hostname === "127.0.0.1"
   : window.env.SPOTIFY_REDIRECT_URI_NETLIFY;
 
 
-console.log(clientId);       // should print your client ID
-console.log(redirectUri);    // should print your local redirect URI on Live Server
 const scopes = "user-read-private user-read-email user-top-read";
 let termLength = "short_term";
+
+// Function to change time range - DEFINED EARLY SO IT'S AVAILABLE FOR ONCLICK
+function setTermLength(length) {
+    termLength = length;
+    console.log(`Term length set to: ${termLength}`);
+
+    // Re-fetch tracks with new time range
+    const storedToken = localStorage.getItem("spotify_access_token");
+    if (storedToken) {
+        getTopTracks(storedToken);
+    }
+}
+
+// Expose to window for onclick handlers
+window.setTermLength = setTermLength;
 
 // Generate PKCE code verifier
 function generateCodeVerifier() {
@@ -172,10 +185,7 @@ async function handleSpotifyFlow() {
     }
 }
 
-// Run
-console.log(`DEBUG: printing values before conditional`);
-console.log(`DEBUG: clientID: ${clientId}`);
-console.log(`DEBUG: redirect URI: ${redirectUri}`);
+
 
 
 if (clientId && redirectUri && !clientId.includes('${process.env') && !redirectUri.includes('${process.env')) {
