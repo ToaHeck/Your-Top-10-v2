@@ -1,4 +1,5 @@
 [build]
+  command = "node generate-env.js"
   functions = "netlify/functions"
   publish = "." # your root directory with index.html
 
